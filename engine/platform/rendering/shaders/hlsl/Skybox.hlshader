@@ -1,0 +1,42 @@
+#shader vertex
+cbuffer SkyboxBuffer : register(b9)
+{
+	float4x4 Projection;
+	float4x4 View;
+};
+
+struct VS_INPUT
+{
+	float3 in_Position : POSITION;
+};
+
+struct VS_OUTPUT
+{
+	float4 out_Position : SV_POSITION;
+	float3 pass_TextureCoords : UV1;
+};
+
+VS_OUTPUT main(VS_INPUT input)
+{
+	VS_OUTPUT output;
+
+	output.out_Position = mul(Projection, mul(View, float4(input.in_Position, 1.0)));
+	output.pass_TextureCoords = input.in_Position;
+
+	return output;
+}
+
+#shader pixel
+struct PS_INPUT
+{
+	float4 in_Position : SV_POSITION;
+	float3 pass_TextureCoords : UV1;
+};
+
+TextureCube skybox_texture : TEXTURE: register(t0);
+SamplerState texture_sampler : SAMPLER: register(s0);
+
+float4 main(PS_INPUT input) : SV_TARGET
+{
+	return skybox_texture.Sample(texture_sampler, input.pass_TextureCoords);
+}

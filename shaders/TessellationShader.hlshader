@@ -1,0 +1,162 @@
+#shader vertex
+struct VS_INPUT
+{
+	float3 Position : POSITION;
+	float2 UV : UV;
+    float3 Normal : NORMAL;
+};
+
+struct VS_OUTPUT
+{
+	float3 Position : POSITION;
+	float2 UV : UV;
+    float3 Normal : NORMAL;
+};
+
+VS_OUTPUT main(VS_INPUT input)
+{
+	VS_OUTPUT output;
+
+	output.Position = input.Position;
+	output.UV		= input.UV;
+	output.Normal	= input.Normal;
+
+	return output;
+}
+
+#shader hull
+struct HS_INPUT
+{
+	float3 Position : POSITION;
+	float2 UV : UV;
+    float3 Normal : NORMAL;
+};
+
+cbuffer TessellationBuffer
+{
+    float u_TesselationAmount;
+    float3 padding;
+};
+
+struct ConstantFnOutputType
+{
+    float Edges[3]	: SV_TessFactor;
+    float Inside	: SV_InsideTessFactor;
+};
+
+struct HS_OUTPUT
+{
+	float3 Position : POSITION;
+	float2 UV : UV;
+    float3 Normal : NORMAL;
+};
+
+ConstantFnOutputType PatchConstantFunction(InputPatch<HS_INPUT, 3> inputPatch, uint PatchId : SV_PrimitiveID)
+{    
+    ConstantFnOutputType output;
+
+    // Set the tessellation factors for the three edges of the triangle.
+    output.Edges[0] = u_TesselationAmount;
+    output.Edges[1] = u_TesselationAmount;
+    output.Edges[2] = u_TesselationAmount;
+
+    // Set the tessellation factor for tessallating inside the triangle.
+    output.Inside = u_TesselationAmount;
+
+    return output;
+}
+
+[domain("tri")]
+[partitioning("integer")]
+[outputtopology("triangle_cw")]
+[outputcontrolpoints(3)]
+[patchconstantfunc("PatchConstantFunction")]
+
+HS_OUTPUT main(InputPatch<HS_INPUT, 3> Patch, uint PointId : SV_OutputControlPointID, uint PatchId : SV_PrimitiveID)
+{
+    HS_OUTPUT output;
+
+    output.Position = Patch[PointId].Position;
+    output.UV       = Patch[PointId].UV;
+    output.Normal   = Patch[PointId].Normal;
+
+    return output;
+}
+
+#shader domain
+cbuffer MVPMatrices : register(b1)
+{
+	float4x4 Transform;
+	float4x4 Projection;
+	float4x4 View;
+};
+
+cbuffer DomainBuffer : register(b2)
+{
+	float u_DisplacementStrength;
+};
+
+struct ConstantFnOutputType
+{
+    float Edges[3]  : SV_TessFactor;
+    float Inside    : SV_InsideTessFactor;
+};
+
+struct DS_INPUT
+{
+	float3 Position : POSITION;
+	float2 UV : UV;
+    float3 Normal : NORMAL;
+};
+
+struct DS_OUTPUT
+{
+    float4 Position : SV_POSITION;
+    float2 UV       : UV;
+    float3 Normal : NORMAL;
+};
+
+Texture2D DisplacementTexture : TEXTURE: register(t0);
+SamplerState DisplacementTextureSampler : SAMPLER: register(s0);
+
+[domain("tri")]
+DS_OUTPUT main(ConstantFnOutputType input, float3 uvwCoord : SV_DomainLocation, const OutputPatch<DS_INPUT, 3> patch)
+{
+    DS_OUTPUT output;
+ 
+    // Determine the position of the new vertex.
+    float3 VertexPosition   = uvwCoord.x * patch[0].Position + uvwCoord.y * patch[1].Position + uvwCoord.z * patch[2].Position;
+    float2 VertexUV         = uvwCoord.x * patch[0].UV + uvwCoord.y * patch[1].UV + uvwCoord.z * patch[2].UV;
+    float3 VertexNormal     = uvwCoord.x * patch[0].Normal + uvwCoord.y * patch[1].Normal + uvwCoord.z * patch[2].Normal;
+    VertexNormal = normalize(VertexNormal);
+
+    float4 WorldPosition        = mul(Transform, float4(VertexPosition, 1.0));
+
+    float height = DisplacementTexture.SampleLevel(DisplacementTextureSampler, VertexUV, 0).r;
+    WorldPosition.xyz += u_DisplacementStrength * (height) * VertexNormal;
+
+	float4 ModelViewPosition    = mul(View, WorldPosition);
+	float4 FinalPosition        = mul(Projection, ModelViewPosition);
+
+    output.Position = FinalPosition;
+
+    output.UV = VertexUV;
+
+    return output;
+}
+
+#shader pixel
+struct PS_INPUT
+{
+	float4 Position : SV_POSITION;
+	float2 UV : UV;
+    float3 Normal : NORMAL;
+};
+
+Texture2D DiffuseTexture : TEXTURE: register(t0);
+SamplerState DiffuseTextureSampler : SAMPLER: register(s0);
+
+float4 main(PS_INPUT input) : SV_TARGET
+{
+	return DiffuseTexture.Sample(DiffuseTextureSampler, input.UV);
+}

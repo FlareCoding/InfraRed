@@ -1,0 +1,96 @@
+#shader vertex
+cbuffer MVPMatrices : register(b0)
+{
+	float4x4 Transform;
+	float4x4 Projection;
+	float4x4 View;
+};
+
+cbuffer GrassBuffer : register(b1)
+{
+	float u_WindRotation;
+};
+
+cbuffer VSSceneBuffer : register(b3)
+{
+	float3	u_LightPosition;
+	float	u_Padding00;
+	float3	u_CameraPosition;
+	float	u_Padding01;
+};
+
+struct VS_INPUT
+{
+	float3		Position : POSITION;
+	float2		UV : UV;
+	float3		WorldPosition : WORLD;
+	float		BladeHeight : HEIGHT;
+	float		BladeRotation : ROTATION;
+};
+
+struct VS_OUTPUT
+{
+	float4 Position : SV_POSITION;
+	float2 UV : UV;
+	float  VertexHeight : HEIGHT;
+};
+
+VS_OUTPUT main(VS_INPUT input)
+{
+	VS_OUTPUT output;
+
+	input.Position.y = clamp(input.Position.y, 0.0f, input.BladeHeight);
+
+	// Individual blade rotation
+	float4x4 BladeRotationMatrix = float4x4(
+		cos(input.BladeRotation),  0,						sin(input.BladeRotation),		0,
+		0,						   1,						0,								0,
+		-sin(input.BladeRotation), 0,						cos(input.BladeRotation),		0,
+		0,						   0,						0,								1
+	);
+
+	// Wind rotation animation
+	float4x4 WindRotationMatrix = float4x4(
+		1,						0,						0,						0,
+		0,						cos(u_WindRotation * input.Position.y),	-sin(u_WindRotation * input.Position.y),	0,
+		0,						sin(u_WindRotation * input.Position.y),	cos(u_WindRotation * input.Position.y),	0,
+		0,						0,						0,						1
+	);
+
+	float4 WorldPosition		= mul(BladeRotationMatrix, float4(input.Position, 1.0f));
+	WorldPosition				= mul(WindRotationMatrix, WorldPosition);
+	WorldPosition				+= float4(input.WorldPosition, 1);
+	WorldPosition				= mul(Transform, WorldPosition);
+
+	float4 ModelViewPosition	= mul(View, WorldPosition);
+	float4 FinalPosition		= mul(Projection, ModelViewPosition);
+
+	output.Position				= FinalPosition;
+	output.UV					= input.UV;
+	output.VertexHeight			= input.Position.y;
+
+	return output;
+}
+
+#shader pixel
+struct PS_INPUT
+{
+	float4 Position : SV_POSITION;
+	float2 UV : UV;
+	float  VertexHeight : HEIGHT;
+};
+
+Texture2D DiffuseTexture : TEXTURE: register(t0);
+SamplerState DiffuseTextureSampler : SAMPLER: register(s0);
+
+float4 CalculateTextureColor(float2 UV)
+{
+	return DiffuseTexture.Sample(DiffuseTextureSampler, UV);
+}
+
+float4 main(PS_INPUT input) : SV_TARGET
+{
+	float4 FinalColor = float4(0, input.VertexHeight / 2.0f, 0, 1) * CalculateTextureColor(input.UV);
+
+	return FinalColor;
+}

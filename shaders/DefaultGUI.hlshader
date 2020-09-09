@@ -1,0 +1,69 @@
+#shader vertex
+cbuffer MVPMatrices : register(b0)
+{
+	float4x4 Transform;
+	float4x4 Projection;
+	float4x4 View;
+};
+
+cbuffer BasicShaderBuffer : register(b5)
+{
+	float3 u_Color;
+	float u_Opacity;
+	float u_Tiling;
+};
+
+struct VS_INPUT
+{
+	float3 in_Position : POSITION;
+	float2 in_UV : UV;
+    float3 in_Normal : NORMAL;
+};
+
+struct VS_OUTPUT
+{
+	float4 out_Position : SV_POSITION;
+	float4 pass_Color : COLOR;
+	float2 pass_UV : UV;
+	float  pass_TextureTiling : UV1;
+};
+
+VS_OUTPUT main(VS_INPUT input)
+{
+	VS_OUTPUT output;
+
+	float4 world_position		= mul(Transform, float4(input.in_Position, 1.0));
+	float4 model_view_position	= mul(View, world_position);
+	float4 final_position		= mul(Projection, model_view_position);
+
+	output.out_Position			= final_position;
+	output.pass_Color			= float4(u_Color, u_Opacity);
+	output.pass_UV				= input.in_UV;
+	output.pass_TextureTiling	= u_Tiling;
+
+	return output;
+}
+
+#shader pixel
+struct PS_INPUT
+{
+	float4 in_Position : SV_POSITION;
+	float4 pass_Color : COLOR;
+	float2 pass_UV : in_UV;
+	float  pass_TextureTiling : UV1;
+};
+
+Texture2D diffuse_texture : TEXTURE: register(t0);
+SamplerState texture_sampler : SAMPLER: register(s0);
+
+float4 CalculateTextureColor(PS_INPUT input)
+{
+	return input.pass_Color * diffuse_texture.Sample(texture_sampler, input.pass_UV * input.pass_TextureTiling);
+}
+
+float4 main(PS_INPUT input) : SV_TARGET
+{
+	float4 FinalColor = CalculateTextureColor(input);
+
+	return FinalColor;
+}

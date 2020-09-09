@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ifrscene name="Scene1">
+	<terrain>
+		<size>1024</size>
+		<vcount>512</vcount>
+		<tiling>158.199005</tiling>
+		<scale>1.000000</scale>
+		<texture>TerrainTexture</texture>
+		<heightmap>HighlandsHeightmapTexture</heightmap>
+		<blendmap>HighlandsBlendmapTexture</blendmap>
+		<material1>HighlandsGroundTexture</material1>
+	</terrain>
+	<entity>
+		<component name="Transform">
+			<position>498.761993 -12.392159 234.145111</position>
+			<rotation>0.000000 0.000000 0.000000</rotation>
+			<scale>0.101000 0.101000 0.101000</scale>
+		</component>
+		<component name="StaticRender">
+			<model>WoodenCabin</model>
+			<texture>WoodenCabinTexture</texture>
+		</component>
+		<component name="Collider">
+			<weight>40</weight>
+			<renderable>1</renderable>
+		</component>
+	</entity>
+	<entity>
+		<component name="Transform">
+			<position>504.753876 -11.050160 231.805115</position>
+			<rotation>0.000000 0.000000 0.000000</rotation>
+			<scale>1.208000 1.208000 1.208000</scale>
+		</component>
+		<component name="StaticRender">
+			<model>Truck</model>
+			<texture>TruckTexture</texture>
+		</component>
+		<component name="Collider">
+			<weight>40</weight>
+			<renderable>1</renderable>
+		</component>
+	</entity>
+	<entity>
+		<component name="Transform">
+			<position>491.508392 -11.050159 236.847458</position>
+			<rotation>0.000000 0.000000 0.000000</rotation>
+			<scale>0.403000 0.403000 0.403000</scale>
+		</component>
+		<component name="AnimatedRender">
+			<model>Lumberjack</model>
+			<texture>LumberjackTexture</texture>
+			<animation_speed>1.000000</animation_speed>
+			<animation_speed_denominator>51.056000</animation_speed_denominator>
+		</component>
+		<component name="Collider">
+			<weight>40</weight>
+			<renderable>1</renderable>
+		</component>
+	</entity>
+</ifrscene>
+

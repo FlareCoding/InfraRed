@@ -1,0 +1,105 @@
+#shader vertex
+cbuffer MVPMatrices : register(b0)
+{
+	float4x4 Transform;
+	float4x4 Projection;
+	float4x4 View;
+};
+
+cbuffer VSSceneBuffer : register(b3)
+{
+	float3 u_LightPosition;
+	float u_Padding0;
+	float3 u_CameraPosition;
+	float u_Padding01;
+};
+
+struct VS_INPUT
+{
+	float3 in_Position : POSITION;
+	float2 in_UV : UV;
+    float3 in_Normal : NORMAL;
+};
+
+struct VS_OUTPUT
+{
+	float4 out_Position : SV_POSITION;
+	float2 pass_UV : UV;
+	float3 pass_SurfaceNormal : COLOR1;
+	float3 pass_ToLightVector : COLOR2;
+};
+
+VS_OUTPUT main(VS_INPUT input)
+{
+	VS_OUTPUT output;
+
+	float4 world_position = mul(Transform, float4(input.in_Position, 1.0));
+	float4 model_view_position = mul(View, world_position);
+	float4 final_position = mul(Projection, model_view_position);
+
+	output.out_Position = final_position;
+	output.pass_UV = input.in_UV;
+	output.pass_SurfaceNormal = mul(Transform, float4(input.in_Normal, 0.0)).xyz;
+	output.pass_ToLightVector = u_LightPosition - world_position.xyz;
+
+	return output;
+}
+
+#shader pixel
+struct PS_INPUT
+{
+	float4 in_Position : SV_POSITION;
+	float2 pass_UV : in_UV;
+	float3 pass_SurfaceNormal : COLOR1;
+	float3 pass_ToLightVector : COLOR2;
+};
+
+cbuffer TerrainBuffer : register(b1)
+{
+	float u_Tiling;
+};
+
+cbuffer PSSceneBuffer : register(b4)
+{
+	float4 u_LightColor;
+};
+
+Texture2D primary_texture : TEXTURE: register(t0);
+SamplerState primary_texture_sampler : SAMPLER: register(s0);
+
+Texture2D support_texture1 : TEXTURE: register(t1);
+SamplerState support_texture_sampler1 : SAMPLER: register(s1);
+
+Texture2D support_texture2 : TEXTURE: register(t2);
+SamplerState support_texture_sampler2 : SAMPLER: register(s2);
+
+Texture2D support_texture3 : TEXTURE: register(t3);
+SamplerState support_texture_sampler3 : SAMPLER: register(s3);
+
+Texture2D blend_map_texture : TEXTURE: register(t4);
+SamplerState blend_map_texture_sampler : SAMPLER: register(s4);
+
+float4 main(PS_INPUT input) : SV_TARGET
+{
+	float4 blend_map_color = blend_map_texture.Sample(blend_map_texture_sampler, input.pass_UV);
+	
+	float primary_texture_amount = 1 - (blend_map_color.r + blend_map_color.g + blend_map_color.b);
+	float2 tiled_texture_coordinates = input.pass_UV * u_Tiling;
+	
+	float4 primary_texture_color = primary_texture.Sample(primary_texture_sampler, tiled_texture_coordinates) * primary_texture_amount;
+	float4 support_texture1_color = support_texture1.Sample(support_texture_sampler1, tiled_texture_coordinates) * blend_map_color.r;
+	float4 support_texture2_color = support_texture2.Sample(support_texture_sampler2, tiled_texture_coordinates) * blend_map_color.g;
+	float4 support_texture3_color = support_texture3.Sample(support_texture_sampler3, tiled_texture_coordinates) * blend_map_color.b;
+
+	float4 total_texture_color = primary_texture_color + support_texture1_color + support_texture2_color + support_texture3_color;
+
+	float3 unit_normal		 = normalize(input.pass_SurfaceNormal);
+	float3 unit_light_vector = normalize(input.pass_ToLightVector);
+
+	float nDotl = dot(unit_normal, unit_light_vector);
+	float brightness = max(nDotl, 0.1);
+	float3 diffuse = brightness * u_LightColor;
+
+	float4 final_color = float4(diffuse, 1.0) * total_texture_color;
+	return final_color;
+}

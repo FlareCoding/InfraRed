@@ -1,0 +1,20 @@
+# Directories
+.vs/
+.vscode/
+build/
+Debug/
+Release/
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Other
+*.DS_Store

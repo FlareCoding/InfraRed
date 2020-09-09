@@ -1,0 +1,122 @@
+#shader vertex
+cbuffer MVPMatrices : register(b0)
+{
+	float4x4 Transform;
+	float4x4 Projection;
+	float4x4 View;
+};
+
+cbuffer BasicShaderBuffer : register(b5)
+{
+	float3 u_Color;
+	float u_Opacity;
+	float u_Tiling;
+};
+
+cbuffer VSSceneBuffer : register(b3)
+{
+	float3 u_LightPosition;
+	float u_Padding00;
+	float3 u_CameraPosition;
+	float u_Padding01;
+};
+
+struct VS_INPUT
+{
+	float3 in_Position : POSITION;
+	float2 in_UV : UV;
+    float3 in_Normal : NORMAL;
+};
+
+struct VS_OUTPUT
+{
+	float4 out_Position : SV_POSITION;
+	float4 pass_Color : COLOR;
+	float2 pass_UV : UV;
+	float  pass_TextureTiling : UV1;
+	float3 pass_SurfaceNormal : COLOR1;
+	float3 pass_ToLightVector : COLOR2;
+	float3 pass_ToCameraVector : TEXCOORD1;
+	float3 pass_ReflectedVector : TEXCOORD2;
+};
+
+VS_OUTPUT main(VS_INPUT input)
+{
+	VS_OUTPUT output;
+
+	float4 world_position = mul(Transform, float4(input.in_Position, 1.0));
+	float4 model_view_position = mul(View, world_position);
+	float4 final_position = mul(Projection, model_view_position);
+
+	output.out_Position = final_position;
+	
+	output.pass_Color = float4(u_Color, u_Opacity);
+	output.pass_UV = input.in_UV;
+	output.pass_TextureTiling = u_Tiling;
+	output.pass_SurfaceNormal = mul(Transform, float4(input.in_Normal, 0.0)).xyz;
+	output.pass_ToLightVector = u_LightPosition - world_position.xyz;
+	output.pass_ToCameraVector = u_CameraPosition - world_position.xyz;
+	output.pass_ReflectedVector = reflect(normalize(world_position.xyz - u_CameraPosition), normalize(output.pass_SurfaceNormal));
+
+	return output;
+}
+
+#shader pixel
+struct PS_INPUT
+{
+	float4 in_Position : SV_POSITION;
+	float4 pass_Color : COLOR;
+	float2 pass_UV : in_UV;
+	float  pass_TextureTiling : UV1;
+	float3 pass_SurfaceNormal : COLOR1;
+	float3 pass_ToLightVector : COLOR2;
+	float3 pass_ToCameraVector : TEXCOORD1;
+	float3 pass_ReflectedVector : TEXCOORD2;
+};
+
+cbuffer PSSceneBuffer : register(b4)
+{
+	float4 u_LightColor;
+};
+
+Texture2D diffuse_texture : TEXTURE: register(t0);
+SamplerState texture_sampler : SAMPLER: register(s0);
+
+static const float Reflectivity = 1.0f;
+static const float ShineDampening = 7.0f;
+
+float4 CalculateTextureColor(PS_INPUT input)
+{
+	return input.pass_Color * diffuse_texture.Sample(texture_sampler, input.pass_UV * input.pass_TextureTiling);
+}
+
+float4 CalculateDiffuseComponent(float3 UnitNormal, float3 UnitLightVector)
+{
+	return saturate(dot(UnitLightVector, UnitNormal));
+}
+
+float4 CalculateAmbientComponent()
+{
+	return float4(0, 0, 0, 1);
+}
+
+float4 CalculateSpecularComponent(float4 DiffuseComponent, float3 UnitNormal, float3 UnitLightVector, float3 UnitViewVector)
+{
+	float3 Reflect = normalize(2.0f * DiffuseComponent * UnitNormal - UnitLightVector);
+	return pow(saturate(dot(Reflect, UnitViewVector)), ShineDampening) * Reflectivity;
+}
+
+float4 main(PS_INPUT input) : SV_TARGET
+{
+	float3 UnitNormal		= normalize(input.pass_SurfaceNormal);
+	float3 UnitLightVector  = normalize(input.pass_ToLightVector);
+	float3 UnitViewVector   = normalize(input.pass_ToCameraVector);
+
+	float4 TextureColor		 = CalculateTextureColor(input);
+	float4 DiffuseComponent  = CalculateDiffuseComponent(UnitNormal, UnitLightVector);
+	float4 AmbientComponent  = CalculateAmbientComponent();
+	float4 SpecularComponent = CalculateSpecularComponent(DiffuseComponent, UnitNormal, UnitLightVector, UnitViewVector);
+
+	float4 FinalColor = AmbientComponent + (u_LightColor * DiffuseComponent) * TextureColor + SpecularComponent;
+	return FinalColor;
+}

@@ -1,0 +1,151 @@
+#shader vertex
+cbuffer MVPMatrices : register(b0)
+{
+	float4x4 Transform;
+	float4x4 Projection;
+	float4x4 View;
+};
+
+cbuffer VSSceneBuffer : register(b3)
+{
+	float3 u_LightPosition;
+	float u_Padding00;
+	float3 u_CameraPosition;
+	float u_Padding01;
+	float u_Tiling;
+};
+
+struct VS_INPUT
+{
+	float3 Position : POSITION;
+	float2 UV : UV;
+    float3 Normal : NORMAL;
+};
+
+struct VS_OUTPUT
+{
+	float4 Position : SV_POSITION;
+	float4 ClipSpacePosition : COLOR;
+	float2 UV : UV;
+	float3 ToCameraVector : TEXCOORD1;
+	float3 FromLightVector : TEXCOORD2;
+};
+
+VS_OUTPUT main(VS_INPUT input)
+{
+	VS_OUTPUT output;
+
+	float4 WorldPosition = mul(Transform, float4(input.Position, 1.0));
+	float4 ModelViewPosition = mul(View, WorldPosition);
+	float4 FinalPosition = mul(Projection, ModelViewPosition);
+
+	output.Position = FinalPosition;
+	output.ClipSpacePosition = FinalPosition;
+	output.UV = input.UV * u_Tiling;
+	
+	output.ToCameraVector = u_CameraPosition - WorldPosition.xyz;
+	output.FromLightVector = WorldPosition.xyz - u_LightPosition;
+
+	return output;
+}
+
+#shader pixel
+struct PS_INPUT
+{
+	float4 Position : SV_POSITION;
+	float4 ClipSpacePosition : COLOR;
+	float2 UV : UV;
+	float3 ToCameraVector : TEXCOORD1;
+	float3 FromLightVector : TEXCOORD2;
+};
+
+cbuffer PSSceneBuffer : register(b4)
+{
+	float4 u_LightColor;
+};
+
+cbuffer WaterBuffer : register(b5)
+{
+	float u_WaveStrength;
+	float u_MoveFactor;
+};
+
+Texture2D ReflectionTexture : TEXTURE: register(t0);
+SamplerState ReflectionTextureSampler : SAMPLER: register(s0);
+
+Texture2D RefractionTexture : TEXTURE: register(t1);
+SamplerState RefractionTextureSampler : SAMPLER: register(s1);
+
+Texture2D DistortionTexture : TEXTURE: register(t2);
+SamplerState DistortionTextureSampler : SAMPLER: register(s2);
+
+Texture2D NormalTexture : TEXTURE: register(t3);
+SamplerState NormalTextureSampler : SAMPLER: register(s3);
+
+static const float Reflectivity = 0.6f;
+static const float ShineDampening = 17.0f;
+
+float2 GetDistortedUVs(float2 InputUV)
+{
+	float2 DistortedUVCoords	= DistortionTexture.Sample(DistortionTextureSampler, float2(InputUV.x + u_MoveFactor, InputUV.y)).xy * 0.1f;
+	DistortedUVCoords			= DistortedUVCoords + float2(DistortedUVCoords.x, DistortedUVCoords.y + u_MoveFactor);
+
+	return DistortedUVCoords;
+}
+
+float2 GetDistortionValue(float2 DistortedUVCoords)
+{
+	float WaveStrength = u_WaveStrength / 1000.0f;
+	return WaveStrength * (DistortionTexture.Sample(DistortionTextureSampler, DistortedUVCoords).xy * 2.0f - 1.0f);
+}
+
+float4 GetReflectionColor(float2 NDC, float2 DistortionValue)
+{
+	float2 ReflectedUV = float2(NDC.x, -1 + NDC.y);
+
+	ReflectedUV		+= DistortionValue;
+	ReflectedUV.x	= clamp(ReflectedUV.x, 0.001f, 0.999f);
+	ReflectedUV.y	= clamp(ReflectedUV.y, -0.999f, -0.001f);
+
+	return ReflectionTexture.Sample(ReflectionTextureSampler, ReflectedUV);
+}
+
+float4 GetRefractionColor(float2 NDC, float2 DistortionValue)
+{
+	float2 RefractedUV = float2(NDC.x, 1 - NDC.y);
+
+	RefractedUV += DistortionValue;
+	RefractedUV = clamp(RefractedUV, 0.001f, 0.999f);
+
+	return RefractionTexture.Sample(RefractionTextureSampler, RefractedUV);
+}
+
+float3 CalculateSpecularHighlights(float3 FromLightVector, float3 UnitView, float3 UnitNormal)
+{
+	float3 ReflectedLight = reflect(normalize(FromLightVector), UnitNormal);
+	float Specular = max(dot(ReflectedLight, UnitView), 0.0);
+	Specular = pow(Specular, ShineDampening);
+	
+	return u_LightColor * Specular * Reflectivity;
+}
+
+float4 main(PS_INPUT input) : SV_TARGET
+{
+	float2 NDC = (input.ClipSpacePosition.xy / input.ClipSpacePosition.w) / 2.0f + 0.5f;
+
+	float2 DistortedUVs		= GetDistortedUVs(input.UV);
+	float2 DistortionValue	= GetDistortionValue(DistortedUVs);
+
+	float4 ReflectionColor = GetReflectionColor(NDC, DistortionValue);
+	float4 RefractionColor = GetRefractionColor(NDC, DistortionValue);
+
+	float4 NormalValue = NormalTexture.Sample(NormalTextureSampler, DistortedUVs);
+	float3 UnitNormal = normalize(float3(NormalValue.r * 2.0f - 1.0f, NormalValue.b, NormalValue.g * 2.0f - 1.0f));
+
+	float3 ViewVector = normalize(input.ToCameraVector);
+	float RefractiveFactor = dot(ViewVector, float3(0, 1, 0));
+
+	float3 SpecularHighlights = CalculateSpecularHighlights(input.FromLightVector, ViewVector, UnitNormal);
+
+	return lerp(ReflectionColor, RefractionColor, RefractiveFactor) + float4(SpecularHighlights, 0.0f);
+}
