@@ -89,8 +89,8 @@ namespace ifr
 		{
 			AnimatedRenderComponent* arc = reinterpret_cast<AnimatedRenderComponent*>(GetComponent(entityID, component_type));
 			std::string model_name = arc->Model.Name;
-			std::string animation_speed = std::to_string(arc->Model.animation.AnimationSpeed);
-			std::string animation_speed_denom = std::to_string(arc->Model.animation.AnimationSpeedDenominator);
+			std::string animation_speed = 0;
+			std::string animation_speed_denom = 0;
 
 			xml_node<>* model_node = document->allocate_node(node_element, "model");
 			model_node->value(document->allocate_string(model_name.c_str()));
@@ -303,11 +303,6 @@ namespace ifr
 
 			auto* anim_speed_node = node->first_node("animation_speed");
 			auto* anim_speed_denom_node = node->first_node("animation_speed_denominator");
-
-			arc->Model.animation.AnimationSpeed = std::stof(anim_speed_node->value());
-			arc->Model.animation.AnimationSpeedDenominator = std::stof(anim_speed_denom_node->value());
-
-			arc->Model.animation.Play();
 
 			break;
 		}

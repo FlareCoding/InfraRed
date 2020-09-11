@@ -181,7 +181,7 @@ namespace ifr
 	std::map<std::string, uint32_t> BoneMapping;
 	std::vector<BoneInfo> BoneInfoList;
 
-	static void CalculateBoneTransforms(Bone& RootBone, const aiScene* scene, glm::mat4 GlobalInverseTransform, float& TicksPerSecond, float& AnimationDuration);
+	static std::string CalculateBoneTransforms(Bone& RootBone, const aiScene* scene, uint32_t animation_index, glm::mat4 GlobalInverseTransform, float& TicksPerSecond, float& AnimationDuration);
 	static Bone ReadNodeHierarchy(aiAnimation* animation, aiNode* node);
 	static const aiNodeAnim* FindNodeAnim(const aiAnimation* animation, const std::string& NodeName);
 
@@ -237,8 +237,6 @@ namespace ifr
 
 		std::vector<Vertex> vertices;
 		std::vector<int> indices;
-		Bone RootBone;
-
 		uint32_t BoneCount = 0;
 
 		// -----------------------------------------------//
@@ -324,7 +322,19 @@ namespace ifr
 		float TicksPerSecond = 0;
 		float AnimationDuration = 0;
 
-		CalculateBoneTransforms(RootBone, scene, InverseTransform, TicksPerSecond, AnimationDuration);
+		glm::mat4 animation_correction_matrix = glm::mat4(1.0f);
+		if (bShouldApplyCorrectionMatrix)
+			animation_correction_matrix = CORRECTION_MATRIX;
+
+		std::vector<Animation> animations;
+		for (uint32_t i = 0; i < scene->mNumAnimations; i++)
+		{
+			Bone RootBone;
+			std::string animation_name = CalculateBoneTransforms(RootBone, scene, i, InverseTransform, TicksPerSecond, AnimationDuration);
+
+			auto animation = Animation(animation_name, AnimationDuration, TicksPerSecond, InverseTransform, BoneCount, RootBone, animation_correction_matrix);
+			animations.push_back(animation);
+		}
 
 		// -----------------------------------------------//
 		//				   Finalizing Data                //
@@ -333,25 +343,20 @@ namespace ifr
 		data.Vertices = vertices;
 		data.Indices = indices;
 
-		glm::mat4 animation_correction_matrix = glm::mat4(1.0f);
-		if (bShouldApplyCorrectionMatrix)
-			animation_correction_matrix = CORRECTION_MATRIX;
-
-		auto animation = Animation(AnimationDuration, TicksPerSecond, InverseTransform, BoneCount, RootBone, animation_correction_matrix);
-
-		auto model = AnimatedModel(Mesh::Create(data), RootBone, animation);
+		auto model = AnimatedModel(Mesh::Create(data), animations);
 		model.DefaultBoundingBoxData = BoundingBoxData{ xMax, xMin, yMax, yMin, zMax, zMin };
 
 		IFR_LOG_SUCCESS("AssimpLoader> [+] Loaded Animated " + filepath + " [+]");
 		return model;
 	}
 
-	void CalculateBoneTransforms(Bone& RootBone, const aiScene* scene, glm::mat4 GlobalInverseTransform, float& TicksPerSecond, float& AnimationDuration)
+	std::string CalculateBoneTransforms(Bone& RootBone, const aiScene* scene, uint32_t animation_index, glm::mat4 GlobalInverseTransform, float& TicksPerSecond, float& AnimationDuration)
 	{
-		TicksPerSecond = (float)scene->mAnimations[0]->mTicksPerSecond;
-		AnimationDuration = (float)scene->mAnimations[0]->mDuration;
+		TicksPerSecond = (float)scene->mAnimations[animation_index]->mTicksPerSecond;
+		AnimationDuration = (float)scene->mAnimations[animation_index]->mDuration;
 
-		RootBone = ReadNodeHierarchy(scene->mAnimations[0], scene->mRootNode);
+		RootBone = ReadNodeHierarchy(scene->mAnimations[animation_index], scene->mRootNode);
+		return scene->mAnimations[animation_index]->mName.C_Str();
 	}
 
 	Bone ReadNodeHierarchy(aiAnimation* animation, aiNode* node)

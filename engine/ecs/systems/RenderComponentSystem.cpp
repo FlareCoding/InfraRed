@@ -90,7 +90,7 @@ namespace ifr
 
 		auto timestep					= Time::GetTimestep();
 		auto& model						= component.Model;
-		auto& animation					= model.animation;
+		auto& animation					= model.GetActiveAnimation();
 
 		animation.Update(timestep);
 

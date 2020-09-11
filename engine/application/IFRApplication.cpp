@@ -16,6 +16,7 @@ namespace ifr
 		m_Running = true;
 		InitializeWindow();
 		InitializeLevelManager();
+		InitializeAudioEngine();
 
 		OnInitialize();
 
@@ -36,6 +37,7 @@ namespace ifr
 		}
 
 		OnShutdown();
+		m_AudioEngine->Shutdown();
 	}
 
 	void IFRApplication::InitializeWindow()
@@ -54,6 +56,11 @@ namespace ifr
 	void IFRApplication::InitializeLevelManager()
 	{
 		m_LevelManager = UniqueRef<LevelManager>(new LevelManager());
+	}
+
+	void IFRApplication::InitializeAudioEngine()
+	{
+		m_AudioEngine = UniqueRef<AudioEngine>(new AudioEngine());
 	}
 
 	void IFRApplication::InternalEventHandler(Event& event)

@@ -18,6 +18,24 @@ private:
 
 	bool m_ShouldHideCursor = true;
 	float m_InitialCoverOpacity = 2.0f;
+	double m_DemoStartTime = 0;
+
 private:
-	Entity Boat = INVALID_ENTITY;
+	Ref<Material> m_DefaultMaterial = nullptr;
+	Ref<Material> m_NormalMappedMaterial = nullptr;
+	void CreateMaterials();
+
+	Entity m_BoatEntity = INVALID_ENTITY;
+	void CreateBoatEntity();
+
+	Entity m_SailorEntity = INVALID_ENTITY;
+	void CreateSailorEntity();
+	bool m_StartedSailorAnimation = false;
+
+	Entity m_SharkEntity = INVALID_ENTITY;
+	void CreateSharkEntity();
+	bool m_StartedSharkAnimation = false;
+	bool m_StartedSharkJumpingAnimation = false;
+
+	void CreateVegetationEntities();
 };

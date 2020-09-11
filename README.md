@@ -16,6 +16,11 @@ The list of currently supported features is as follows:
     - C++ scripting support
     - Dynamic asset loading system
 
+
+
+[![Imgur](https://i.imgur.com/TdLGSZq.png?2)](https://www.youtube.com/watch?v=0LoNIxV2V20&ab_channel=AlbertSlepak "InfraRed Engine Demo")
+
+
 ## Platform
 
 | Linux | Windows | MacOS |

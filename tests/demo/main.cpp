@@ -11,6 +11,7 @@ int main()
 	StartupSettings.WindowWidth = desktop.right;
 	StartupSettings.WindowHeight = desktop.bottom;
 	StartupSettings.WindowTitle = "Demo";
+	StartupSettings.Fullscreen = true;
 
 	std::unique_ptr<Demo> app = std::make_unique<Demo>();
 	app->SetApplicationStartupSettings(StartupSettings);

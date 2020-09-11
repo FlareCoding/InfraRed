@@ -54,6 +54,16 @@ namespace ifr
 		AddAssetInfoToQueue(info);
 	}
 
+	void AssetLoadingQueue::LoadAudioSourceAsset(const std::string& filepath, const std::string& name)
+	{
+		AssetInfo info;
+		info.Filepath = filepath;
+		info.Name = name;
+		info.Type = AssetType::AudioSource;
+
+		AddAssetInfoToQueue(info);
+	}
+
 	void AssetLoadingQueue::LoadSceneAsset(const std::string& filepath, const std::string& name)
 	{
 		AssetInfo info;
@@ -88,6 +98,14 @@ namespace ifr
 			return AnimatedModel();
 	}
 
+	Ref<AudioSource> AssetLoadingQueue::RetrieveAudioSourceAsset(const std::string& name)
+	{
+		if (m_CustomLoadedAudioSources.find(name) != m_CustomLoadedAudioSources.end())
+			return m_CustomLoadedAudioSources[name];
+		else
+			return nullptr;
+	}
+
 	Ref<Scene> AssetLoadingQueue::RetrieveSceneAsset(const std::string& name)
 	{
 		if (m_CustomLoadedScenes.find(name) != m_CustomLoadedScenes.end())
@@ -102,9 +120,9 @@ namespace ifr
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(400));
 
+			asset_queue_mutex.lock();
 			try
 			{
-				asset_queue_mutex.lock();
 				for (auto& asset : m_AssetQueue)
 				{
 					switch (asset.Type)
@@ -137,6 +155,12 @@ namespace ifr
 						m_OnLoadCallback(asset.Name);
 						break;
 					}
+					case AssetType::AudioSource:
+					{
+						m_CustomLoadedAudioSources[asset.Name] = AudioEngine::Get().LoadAndRegisterWAVAudioSource(asset.Filepath, asset.Name);
+						m_OnLoadCallback(asset.Name);
+						break;
+					}
 					case AssetType::Scene:
 					{
 						m_CustomLoadedScenes[asset.Name] = IFRSceneLoader::Import(asset.Filepath);
@@ -149,9 +173,9 @@ namespace ifr
 				}
 
 				m_AssetQueue.clear();
-				asset_queue_mutex.unlock();
 			}
 			catch (...) {}
+			asset_queue_mutex.unlock();
 		}
 	}
 	

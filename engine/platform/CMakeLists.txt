@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
+add_subdirectory(audio)
 add_subdirectory(input)
 add_subdirectory(rendering)
 add_subdirectory(window)

@@ -3,6 +3,7 @@
 #include <time/Time.h>
 #include <window/Window.h>
 #include <input/Input.h>
+#include <audio/AudioEngine.h>
 #include <rendering/Renderer.h>
 #include <camera/FPSCamera.h>
 #include <camera/OrthographicCamera.h>
@@ -52,6 +53,9 @@ namespace ifr
 
 		UniqueRef<LevelManager> m_LevelManager;
 		void InitializeLevelManager();
+
+		UniqueRef<AudioEngine> m_AudioEngine;
+		void InitializeAudioEngine();
 
 	private:
 		void InternalEventHandler(Event& event);

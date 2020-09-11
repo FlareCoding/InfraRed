@@ -10,7 +10,9 @@ namespace ifr
 	{
 	public:
 		Animation() = default;
-		Animation(float duration, float ticks_per_second, glm::mat4 inverse_transform, int bone_count, Bone root_bone, glm::mat4 correction_matrix);
+		Animation(const std::string& name, float duration, float ticks_per_second, glm::mat4 inverse_transform, int bone_count, Bone root_bone, glm::mat4 correction_matrix);
+
+		std::string Name;
 
 		float Duration = 0;
 		float TicksPerSecond = 0;
@@ -34,6 +36,8 @@ namespace ifr
 
 		Bone* FindBone(const std::string& name);
 		void ForEachBone(Bone& bone, std::function<void(Bone&)> lambda);
+
+		Bone& GetRootBone() { return m_RootBone; }
 
 	private:
 		bool m_IsPlaying = false;

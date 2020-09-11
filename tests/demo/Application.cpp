@@ -2,6 +2,7 @@
 
 void Demo::OnInitialize()
 {
+	Window::Get().SetCursorLocked(true);
 	m_OrthoCamera = MakeRef<OrthographicCamera>();
 	m_DemoLevel = MakeRef<DemoLevel>();
 	m_LogoTexture = Texture2D::LoadFromFile("assets\\logo\\InfraRedLogo.png", TextureFormat::RGBA8, false);
@@ -10,16 +11,32 @@ void Demo::OnInitialize()
 		AssetOnLoad(name);
 	});
 
-	Assets::LoadTexture2D("assets\\textures\\WoodenBoat.jpg", "WoodenBoatDiffuse");
-	Assets::LoadStaticModel("assets\\models\\WoodenBoat.fbx", "WoodenBoat", true);
+	Assets::LoadAudioSource("OceanWaves.wav", "OceanWaves");
+	Assets::LoadAudioSource("Greeting.wav", "Greeting");
+	Assets::LoadAudioSource("Introduction.wav", "Introduction");
+	Assets::LoadAudioSource("LookAShark.wav", "LookAShark");
+	Assets::LoadAudioSource("SlowMotion.wav", "SlowMotion");
+	Assets::LoadTexture2D("WoodenBoat.jpg", "WoodenBoatDiffuse");
+	Assets::LoadStaticModel("WoodenBoat.fbx", "WoodenBoat", true);
+	Assets::LoadTexture2D("Lumberjack.png", "SailorDiffuse");
+	Assets::LoadAnimatedModel("Sailor.fbx", "Sailor", true);
+	Assets::LoadTexture2D("Rock.jpg", "RockDiffuse", true);
+	Assets::LoadTexture2D("RockNormal.png", "RockNormal", true);
+	Assets::LoadStaticModel("Rock.obj", "Rock", false);
+	Assets::LoadTexture2D("LilyPad.png", "LilyPadDiffuse", true);
+	Assets::LoadStaticModel("LilyPad.obj", "LilyPad", false);
+	Assets::LoadTexture2D("Lotus.jpg", "LotusDiffuse", true);
+	Assets::LoadStaticModel("Lotus.obj", "Lotus", false);
+	Assets::LoadTexture2D("Shark.png", "SharkDiffuse", true);
+	Assets::LoadAnimatedModel("Shark.fbx", "Shark", false);
 	Assets::LoadTextureCube(
 		{
-			("assets\\textures\\skyboxes\\SB1_right.png"),
-			("assets\\textures\\skyboxes\\SB1_left.png"),
-			("assets\\textures\\skyboxes\\SB1_top.png"),
-			("assets\\textures\\skyboxes\\SB1_bottom.png"),
-			("assets\\textures\\skyboxes\\SB1_back.png"),
-			("assets\\textures\\skyboxes\\SB1_front.png")
+			("skyboxes\\SB1_right.png"),
+			("skyboxes\\SB1_left.png"),
+			("skyboxes\\SB1_top.png"),
+			("skyboxes\\SB1_bottom.png"),
+			("skyboxes\\SB1_back.png"),
+			("skyboxes\\SB1_front.png")
 		},
 		"DemoSkybox"
 	);

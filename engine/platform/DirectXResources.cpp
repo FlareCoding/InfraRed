@@ -9,4 +9,6 @@ namespace ifr
 	ComPtr<ID3D11DepthStencilState> DirectXResources::s_DepthStencilState = nullptr;
 	ComPtr<ID3D11DepthStencilView>	DirectXResources::s_DepthStencilView = nullptr;
 	ComPtr<ID3D11SamplerState>		DirectXResources::s_SamplerState = nullptr;
+	ComPtr<IXAudio2>				DirectXResources::s_XAudio2 = nullptr;
+	IXAudio2MasteringVoice*			DirectXResources::s_XAudio2MasteringVoice = nullptr;
 }

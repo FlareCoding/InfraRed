@@ -8,7 +8,7 @@ namespace ifr
 	{
 	public:
 		AnimatedModel();
-		AnimatedModel(const Ref<Mesh>& skin, const Bone& root_bone, Animation animation);
+		AnimatedModel(const Ref<Mesh>& skin, const std::vector<Animation>& animations);
 
 		std::string Name = "";
 
@@ -19,6 +19,12 @@ namespace ifr
 		BoundingBoxData DefaultBoundingBoxData = BoundingBoxData();
 		Ref<ConvexHull> DefaultConvexHull = nullptr;
 
-		Animation animation;
+		std::vector<Animation> animations;
+		void SetActiveAnimation(const std::string& name);
+		Animation* GetAnimation(const std::string& name);
+		Animation& GetActiveAnimation();
+
+	private:
+		size_t m_ActiveAnimationIndex = 0;
 	};
 }

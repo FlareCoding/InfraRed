@@ -34,7 +34,13 @@ namespace ifr
 		texture->Bind(0);
 
 		m_Shader->Bind();
-		m_Shader->SetSkyboxBuffer(camera.GetProjection(), camera.GetViewMatrix());
+
+		auto view_matrix = camera.GetViewMatrix();
+		auto frame_rotation_value = RotationSpeed / 10000.0f * (float)Time::GetTimestep();
+		m_Rotation += frame_rotation_value;
+		view_matrix = glm::rotate(view_matrix, glm::radians(m_Rotation), { 0, 1, 0 });
+
+		m_Shader->SetSkyboxBuffer(camera.GetProjection(), view_matrix);
 
 		Renderer3D::DrawRawMeshData(m_Mesh);
 

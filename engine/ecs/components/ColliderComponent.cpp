@@ -30,7 +30,7 @@ namespace ifr
 			if (animated_render_component)
 			{
 				auto& box_data = animated_render_component->Model.DefaultBoundingBoxData;
-				ObjectOrientedBox = Ref<OBB>(new OBB(box_data.xMax, box_data.xMin, box_data.yMax, box_data.yMin, box_data.zMax, box_data.zMin, animated_render_component->Model.animation.GetCorrectionMatrix()));
+				ObjectOrientedBox = Ref<OBB>(new OBB(box_data.xMax, box_data.xMin, box_data.yMax, box_data.yMin, box_data.zMax, box_data.zMin, animated_render_component->Model.GetActiveAnimation().GetCorrectionMatrix()));
 			}
 		}
 	}

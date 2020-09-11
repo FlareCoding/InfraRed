@@ -8,6 +8,11 @@ namespace ifr
 	{
 	}
 
+	DirectXContext::~DirectXContext()
+	{
+		ReleaseAudioEngine();
+	}
+
 	void DirectXContext::Init()
 	{
 		InitializeSwapChain();
@@ -18,6 +23,7 @@ namespace ifr
 		InitializeRasterizerState();
 		InitializeBlendState();
 		InitializeSamplerState();
+		InitializeAudioEngine();
 
 		IFR_LOG_SUCCESS("Successfully Initialized DirectX");
 		IFR_LOG_STATUS(m_InitSuccessString);
@@ -184,5 +190,22 @@ namespace ifr
 		HRESULT result = DirectXResources::s_Device->CreateSamplerState(&sampler_desc, DirectXResources::s_SamplerState.GetAddressOf());
 		if (FAILED(result))
 			IFR_LOG_ERROR("Failed to create sampler state");
+	}
+
+	void DirectXContext::InitializeAudioEngine()
+	{
+		HRESULT result = XAudio2Create(DirectXResources::s_XAudio2.GetAddressOf(), 0, XAUDIO2_DEFAULT_PROCESSOR);
+		if (FAILED(result))
+			IFR_LOG_ERROR("Failed to create XAudio2 resource");
+
+		result = DirectXResources::s_XAudio2->CreateMasteringVoice(&DirectXResources::s_XAudio2MasteringVoice);
+		if (FAILED(result))
+			IFR_LOG_ERROR("Failed to create XAudio2 mastering voice");
+	}
+
+	void DirectXContext::ReleaseAudioEngine()
+	{
+		if (DirectXResources::s_XAudio2MasteringVoice)
+			DirectXResources::s_XAudio2MasteringVoice->DestroyVoice();
 	}
 }

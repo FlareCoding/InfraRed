@@ -10,6 +10,8 @@ namespace ifr
 	{
 	public:
 		DirectXContext(WindowData& window_properties, HWND hwnd);
+		~DirectXContext();
+
 		virtual void Init() override;
 		virtual void SwapBuffers() override;
 
@@ -22,6 +24,8 @@ namespace ifr
 		void InitializeRasterizerState();
 		void InitializeBlendState();
 		void InitializeSamplerState();
+		void InitializeAudioEngine();
+		void ReleaseAudioEngine();
 
 	private:
 		WindowData m_WindowProperties;

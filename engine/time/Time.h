@@ -9,13 +9,13 @@ namespace ifr
 	class Time
 	{
 	public:
-		IFRAPI static double GetElapsedTime();
+		static double GetElapsedTime();
 
-		IFRAPI static double GetTimeScale();
-		IFRAPI static void SetTimeScale(double scale);
+		static double GetTimeScale();
+		static void SetTimeScale(double scale);
 
-		IFRAPI static Timestep GetTimestep();
-		IFRAPI static void FrameUpdate();
+		static Timestep GetTimestep();
+		static void FrameUpdate();
 
 	private:
 		static double s_ElapsedTime;

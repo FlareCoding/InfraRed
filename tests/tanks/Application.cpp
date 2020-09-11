@@ -9,17 +9,17 @@ void App::OnInitialize()
 		AssetOnLoad(name);
 	});
 
-	Assets::LoadTexture2D("assets\\textures\\StartGameButton.png",		"StartGameButton", false);
-	Assets::LoadTexture2D("assets\\textures\\QuitButton.png",			"QuitButton", false);
-	Assets::LoadStaticModel("assets\\models\\Cube.obj",					"Cube", false);
-	Assets::LoadTexture2D("assets\\textures\\HealthbarFull.png",		"HealthbarFull", false);
-	Assets::LoadTexture2D("assets\\textures\\HealthbarMid.png",			"HealthbarMid", false);
-	Assets::LoadTexture2D("assets\\textures\\HealthbarLow.png",			"HealthbarLow", false);
-	Assets::LoadTexture2D("assets\\textures\\TankDiffuse.jpg",			"TankDiffuse");
-	Assets::LoadTexture2D("assets\\textures\\TankNormal.jpg",			"TankNormal");
-	Assets::LoadStaticModel("assets\\models\\Tank.fbx",					"Tank", true);
-	Assets::LoadTexture2D("assets\\textures\\ExitGame.png",				"ExitGameButton", false);
-	Assets::LoadTexture2D("assets\\textures\\TronFloor.jpg",			"TronFloor");
+	Assets::LoadTexture2D("StartGameButton.png",	"StartGameButton", false);
+	Assets::LoadTexture2D("QuitButton.png",			"QuitButton", false);
+	Assets::LoadStaticModel("Cube.obj",				"Cube", false);
+	Assets::LoadTexture2D("HealthbarFull.png",		"HealthbarFull", false);
+	Assets::LoadTexture2D("HealthbarMid.png",		"HealthbarMid", false);
+	Assets::LoadTexture2D("HealthbarLow.png",		"HealthbarLow", false);
+	Assets::LoadTexture2D("TankDiffuse.jpg",		"TankDiffuse");
+	Assets::LoadTexture2D("TankNormal.jpg",			"TankNormal");
+	Assets::LoadStaticModel("Tank.fbx",				"Tank", true);
+	Assets::LoadTexture2D("ExitGame.png",			"ExitGameButton", false);
+	Assets::LoadTexture2D("TronFloor.jpg",			"TronFloor");
 
 	m_MainMenuLevel = MakeRef<MainMenuLevel>();
 	m_ArenaLevel	= MakeRef<ArenaLevel>();

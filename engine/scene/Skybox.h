@@ -11,6 +11,7 @@ namespace ifr
 		static Ref<Skybox> Create();
 
 		Ref<Texture> texture = nullptr;
+		float RotationSpeed = 1.0f;
 
 		void Render(ICamera& camera);
 
@@ -20,5 +21,6 @@ namespace ifr
 	private:
 		Ref<SkyboxShader> m_Shader;
 		Ref<Mesh> m_Mesh;
+		float m_Rotation = 0.0f;
 	};
 }

@@ -2,8 +2,8 @@
 
 namespace ifr
 {	
-	Animation::Animation(float duration, float ticks_per_second, glm::mat4 inverse_transform, int bone_count, Bone root_bone, glm::mat4 correction_matrix)
-		: Duration(duration), TicksPerSecond(ticks_per_second), m_InverseTransform(inverse_transform), m_RootBone(root_bone), 
+	Animation::Animation(const std::string& name, float duration, float ticks_per_second, glm::mat4 inverse_transform, int bone_count, Bone root_bone, glm::mat4 correction_matrix)
+		: Name(name), Duration(duration), TicksPerSecond(ticks_per_second), m_InverseTransform(inverse_transform), m_RootBone(root_bone), 
 			m_BoneCount((uint32_t)bone_count), m_CorrectionMatrix(correction_matrix)
 	{
 		for (size_t i = 0; i < bone_count; i++)
